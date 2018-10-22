@@ -1,0 +1,265 @@
+
+<!DOCTYPE html
+  PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html><head>
+      <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+   <!--
+This HTML was auto-generated from MATLAB code.
+To make changes, update the MATLAB code and republish this document.
+      --><title>readData</title><meta name="generator" content="MATLAB 9.3"><link rel="schema.DC" href="http://purl.org/dc/elements/1.1/"><meta name="DC.date" content="2018-10-18"><meta name="DC.source" content="readData.m"><style type="text/css">
+html,body,div,span,applet,object,iframe,h1,h2,h3,h4,h5,h6,p,blockquote,pre,a,abbr,acronym,address,big,cite,code,del,dfn,em,font,img,ins,kbd,q,s,samp,small,strike,strong,sub,sup,tt,var,b,u,i,center,dl,dt,dd,ol,ul,li,fieldset,form,label,legend,table,caption,tbody,tfoot,thead,tr,th,td{margin:0;padding:0;border:0;outline:0;font-size:100%;vertical-align:baseline;background:transparent}body{line-height:1}ol,ul{list-style:none}blockquote,q{quotes:none}blockquote:before,blockquote:after,q:before,q:after{content:'';content:none}:focus{outine:0}ins{text-decoration:none}del{text-decoration:line-through}table{border-collapse:collapse;border-spacing:0}
+
+html { min-height:100%; margin-bottom:1px; }
+html body { height:100%; margin:0px; font-family:Arial, Helvetica, sans-serif; font-size:10px; color:#000; line-height:140%; background:#fff none; overflow-y:scroll; }
+html body td { vertical-align:top; text-align:left; }
+
+h1 { padding:0px; margin:0px 0px 25px; font-family:Arial, Helvetica, sans-serif; font-size:1.5em; color:#d55000; line-height:100%; font-weight:normal; }
+h2 { padding:0px; margin:0px 0px 8px; font-family:Arial, Helvetica, sans-serif; font-size:1.2em; color:#000; font-weight:bold; line-height:140%; border-bottom:1px solid #d6d4d4; display:block; }
+h3 { padding:0px; margin:0px 0px 5px; font-family:Arial, Helvetica, sans-serif; font-size:1.1em; color:#000; font-weight:bold; line-height:140%; }
+
+a { color:#005fce; text-decoration:none; }
+a:hover { color:#005fce; text-decoration:underline; }
+a:visited { color:#004aa0; text-decoration:none; }
+
+p { padding:0px; margin:0px 0px 20px; }
+img { padding:0px; margin:0px 0px 20px; border:none; }
+p img, pre img, tt img, li img, h1 img, h2 img { margin-bottom:0px; } 
+
+ul { padding:0px; margin:0px 0px 20px 23px; list-style:square; }
+ul li { padding:0px; margin:0px 0px 7px 0px; }
+ul li ul { padding:5px 0px 0px; margin:0px 0px 7px 23px; }
+ul li ol li { list-style:decimal; }
+ol { padding:0px; margin:0px 0px 20px 0px; list-style:decimal; }
+ol li { padding:0px; margin:0px 0px 7px 23px; list-style-type:decimal; }
+ol li ol { padding:5px 0px 0px; margin:0px 0px 7px 0px; }
+ol li ol li { list-style-type:lower-alpha; }
+ol li ul { padding-top:7px; }
+ol li ul li { list-style:square; }
+
+.content { font-size:1.2em; line-height:140%; padding: 20px; }
+
+pre, code { font-size:12px; }
+tt { font-size: 1.2em; }
+pre { margin:0px 0px 20px; }
+pre.codeinput { padding:10px; border:1px solid #d3d3d3; background:#f7f7f7; }
+pre.codeoutput { padding:10px 11px; margin:0px 0px 20px; color:#4c4c4c; }
+pre.error { color:red; }
+
+@media print { pre.codeinput, pre.codeoutput { word-wrap:break-word; width:100%; } }
+
+span.keyword { color:#0000FF }
+span.comment { color:#228B22 }
+span.string { color:#A020F0 }
+span.untermstring { color:#B20000 }
+span.syscmd { color:#B28C00 }
+
+.footer { width:auto; padding:10px 0px; margin:25px 0px 0px; border-top:1px dotted #878787; font-size:0.8em; line-height:140%; font-style:italic; color:#878787; text-align:left; float:none; }
+.footer p { margin:0px; }
+.footer a { color:#878787; }
+.footer a:hover { color:#878787; text-decoration:underline; }
+.footer a:visited { color:#878787; }
+
+table th { padding:7px 5px; text-align:left; vertical-align:middle; border: 1px solid #d6d4d4; font-weight:bold; }
+table td { padding:7px 5px; text-align:left; vertical-align:top; border:1px solid #d6d4d4; }
+
+
+
+
+
+  </style></head><body><div class="content"><h1>readData</h1><!--introduction--><p>Reads the time-intensity data from spreadsheets in the current folder and saves them in folders corresponding to the filename. Files should be named as <a href="cellLine">cellLine</a>_&lt;surface&gt;_&lt;timepoint&gt;_&lt;ATP stimulus number&gt;.xlsx and the excel sheets should be named as the corresponding ROIs (e.g. ROI1, ROI2, etc.) The intensity vectors are saved to the allSheets struct and the objects for each cell in the cellData cell array in the mat-file.</p><!--/introduction--><h2>Contents</h2><div><ul><li><a href="#1">List all files in the folder and loop to find all excel files.</a></li><li><a href="#2">Loop every excel file with readCaData-function to read the data.</a></li><li><a href="#3">readCaData</a></li><li><a href="#4">Get file info from the filename</a></li><li><a href="#5">Read all the sheets of  the excel file to the variable allSheets</a></li><li><a href="#6">Pick only absolute intensity data from allSheets (relative data calculated later, not needed from excel)</a></li><li><a href="#7">Create a cell of ca_response objects</a></li><li><a href="#8">Save the data to a file and create a folder for the mat-file and the original xlsx</a></li></ul></div><h2 id="1">List all files in the folder and loop to find all excel files.</h2><pre class="codeinput">files = dir(<span class="string">'*.xlsx'</span>);
+r = length(files(:,1));
+xlsxFiles = cell(r,1);
+
+<span class="keyword">for</span> idx = 1:r
+    xlsxFiles{idx,1} = files(idx).name;
+<span class="keyword">end</span>
+</pre><h2 id="2">Loop every excel file with readCaData-function to read the data.</h2><pre class="codeinput">idx2 = length(xlsxFiles);
+
+<span class="keyword">for</span> k = 1:idx2
+    readCaData(xlsxFiles{k})
+<span class="keyword">end</span>
+
+clear
+</pre><h2 id="3">readCaData</h2><p>readCaData reads intensity data from every sheet of an excel file containing time and intensity data. Takes the filename as input from the readData script.</p><pre class="codeinput"><span class="keyword">function</span> readCaData( filename )
+</pre><h2 id="4">Get file info from the filename</h2><pre class="codeinput">idx = strfind(filename, <span class="string">'_'</span>);
+cellLine = filename(idx(1)-6:idx(1)-1);
+ATPstimulus = filename(idx(3)+1:idx(3)+4);
+surface = filename(idx(1)+1:idx(2)-1);
+timepoint = filename(idx(2)+1:idx(3)-1);
+[~,ROI] = xlsfinfo(filename); <span class="comment">%xlsx file sheet names</span>
+c = length(ROI);
+foldername = filename(1:end-5);
+</pre><h2 id="5">Read all the sheets of  the excel file to the variable allSheets</h2><pre class="codeinput"><span class="keyword">for</span> idx2 = 1:c
+    allSheets{idx2} = readtable(filename, <span class="string">'Sheet'</span>, idx2, <span class="string">'ReadVariableNames'</span>, 0);
+<span class="keyword">end</span>
+
+<span class="comment">% Convert data from cell to struct</span>
+allSheets = cell2struct(allSheets, ROI, 2);
+</pre><h2 id="6">Pick only absolute intensity data from allSheets (relative data calculated later, not needed from excel)</h2><pre class="codeinput"><span class="keyword">for</span> idx3 = 1:c
+
+    w = width(allSheets.(ROI{idx3}));
+    m = 2;
+
+
+    <span class="keyword">for</span> k = 2:w
+
+        <span class="keyword">if</span> allSheets.(ROI{idx3}){1,k} &gt; 2
+           allSheets.(ROI{idx3}){:,m} = allSheets.(ROI{idx3}){:,k};
+           m = m+1;
+        <span class="keyword">end</span>
+
+    <span class="keyword">end</span>
+
+    allSheets.(ROI{idx3}) = allSheets.(ROI{idx3})(:,1:m-1);
+
+<span class="keyword">end</span>
+</pre><h2 id="7">Create a cell of ca_response objects</h2><pre class="codeinput">sheets = fieldnames(allSheets);
+cellData = cell(150,3); <span class="comment">% default value for 3 ROIs with maximum of</span>
+                        <span class="comment">% 150 cells each (adjust if needed)</span>
+
+<span class="keyword">for</span> idx4 = 1:length(sheets)
+
+    time = allSheets.(sheets{idx4})(:,1); <span class="comment">% Picks the time vector from the first column.</span>
+
+    <span class="keyword">for</span> idx5 = 2:width(allSheets.(sheets{idx4}))
+
+        <span class="comment">% Create the object (see ca_response.m) and add properties</span>
+        <span class="comment">% for each cell object.</span>
+        a = ca_response;
+        a.timeVector = time{:,:};
+        a.rawData = allSheets.(sheets{idx4}){:,idx5};
+        a.ATPtype = ATPstimulus;
+        a.surface = surface;
+        a.timepoint = timepoint;
+        a.cellLine = cellLine;
+        a.isDiscarded = 0;
+        a.isSkipped = 0;
+        cellData{idx5-1,idx4} = a; <span class="comment">%Places the object in the cellData array.</span>
+
+    <span class="keyword">end</span>
+
+<span class="keyword">end</span>
+</pre><h2 id="8">Save the data to a file and create a folder for the mat-file and the original xlsx</h2><pre class="codeinput">mkdir(foldername);
+movefile(filename, foldername)
+cd(foldername)
+save(foldername, <span class="string">'allSheets'</span>, <span class="string">'cellData'</span>)
+cd <span class="string">../</span>
+</pre><pre class="codeinput"><span class="keyword">end</span>
+</pre><p class="footer"><br><a href="http://www.mathworks.com/products/matlab/">Published with MATLAB&reg; R2017b</a><br></p></div><!--
+##### SOURCE BEGIN #####
+%% readData
+% Reads the time-intensity data from spreadsheets in the current folder
+% and saves them in folders corresponding to the filename. Files should be 
+% named as <cellLine>_<surface>_<timepoint>_<ATP stimulus number>.xlsx
+% and the excel sheets should be named as the corresponding ROIs (e.g. ROI1, 
+% ROI2, etc.) The intensity vectors are saved to the allSheets struct and 
+% the objects for each cell in the cellData cell array in the mat-file.
+
+
+%% List all files in the folder and loop to find all excel files.
+
+files = dir('*.xlsx');
+r = length(files(:,1));
+xlsxFiles = cell(r,1);
+
+for idx = 1:r
+    xlsxFiles{idx,1} = files(idx).name;
+end
+
+%% Loop every excel file with readCaData-function to read the data.
+
+idx2 = length(xlsxFiles);
+
+for k = 1:idx2
+    readCaData(xlsxFiles{k})
+end
+
+clear
+
+%% readCaData
+% readCaData reads intensity data from every sheet of an excel file containing
+% time and intensity data. Takes the filename as input from the readData script.
+
+function readCaData( filename )
+%% Get file info from the filename
+
+idx = strfind(filename, '_');
+cellLine = filename(idx(1)-6:idx(1)-1);
+ATPstimulus = filename(idx(3)+1:idx(3)+4);
+surface = filename(idx(1)+1:idx(2)-1);
+timepoint = filename(idx(2)+1:idx(3)-1);
+[~,ROI] = xlsfinfo(filename); %xlsx file sheet names
+c = length(ROI);
+foldername = filename(1:end-5);
+
+%% Read all the sheets of  the excel file to the variable allSheets
+
+for idx2 = 1:c  
+    allSheets{idx2} = readtable(filename, 'Sheet', idx2, 'ReadVariableNames', 0);
+end
+
+% Convert data from cell to struct
+allSheets = cell2struct(allSheets, ROI, 2);
+
+%% Pick only absolute intensity data from allSheets (relative data calculated later, not needed from excel)
+
+for idx3 = 1:c
+    
+    w = width(allSheets.(ROI{idx3}));
+    m = 2;
+   
+    
+    for k = 2:w
+        
+        if allSheets.(ROI{idx3}){1,k} > 2
+           allSheets.(ROI{idx3}){:,m} = allSheets.(ROI{idx3}){:,k};
+           m = m+1;
+        end
+        
+    end
+
+    allSheets.(ROI{idx3}) = allSheets.(ROI{idx3})(:,1:m-1);
+
+end
+
+%% Create a cell of ca_response objects
+
+sheets = fieldnames(allSheets);
+cellData = cell(150,3); % default value for 3 ROIs with maximum of 
+                        % 150 cells each (adjust if needed)
+
+for idx4 = 1:length(sheets)
+    
+    time = allSheets.(sheets{idx4})(:,1); % Picks the time vector from the first column.
+    
+    for idx5 = 2:width(allSheets.(sheets{idx4}))
+        
+        % Create the object (see ca_response.m) and add properties 
+        % for each cell object.
+        a = ca_response; 
+        a.timeVector = time{:,:};
+        a.rawData = allSheets.(sheets{idx4}){:,idx5};
+        a.ATPtype = ATPstimulus;
+        a.surface = surface;
+        a.timepoint = timepoint;
+        a.cellLine = cellLine;
+        a.isDiscarded = 0;
+        a.isSkipped = 0;
+        cellData{idx5-1,idx4} = a; %Places the object in the cellData array.
+        
+    end
+    
+end
+
+%% Save the data to a file and create a folder for the mat-file and the original xlsx
+
+mkdir(foldername);
+movefile(filename, foldername)
+cd(foldername)
+save(foldername, 'allSheets', 'cellData')
+cd ../
+
+end
+
+##### SOURCE END #####
+--></body></html>

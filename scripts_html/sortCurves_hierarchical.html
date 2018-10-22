@@ -1,0 +1,579 @@
+
+<!DOCTYPE html
+  PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html><head>
+      <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+   <!--
+This HTML was auto-generated from MATLAB code.
+To make changes, update the MATLAB code and republish this document.
+      --><title>sortCurves_hierarchical</title><meta name="generator" content="MATLAB 9.3"><link rel="schema.DC" href="http://purl.org/dc/elements/1.1/"><meta name="DC.date" content="2018-10-21"><meta name="DC.source" content="sortCurves_hierarchical.m"><style type="text/css">
+html,body,div,span,applet,object,iframe,h1,h2,h3,h4,h5,h6,p,blockquote,pre,a,abbr,acronym,address,big,cite,code,del,dfn,em,font,img,ins,kbd,q,s,samp,small,strike,strong,sub,sup,tt,var,b,u,i,center,dl,dt,dd,ol,ul,li,fieldset,form,label,legend,table,caption,tbody,tfoot,thead,tr,th,td{margin:0;padding:0;border:0;outline:0;font-size:100%;vertical-align:baseline;background:transparent}body{line-height:1}ol,ul{list-style:none}blockquote,q{quotes:none}blockquote:before,blockquote:after,q:before,q:after{content:'';content:none}:focus{outine:0}ins{text-decoration:none}del{text-decoration:line-through}table{border-collapse:collapse;border-spacing:0}
+
+html { min-height:100%; margin-bottom:1px; }
+html body { height:100%; margin:0px; font-family:Arial, Helvetica, sans-serif; font-size:10px; color:#000; line-height:140%; background:#fff none; overflow-y:scroll; }
+html body td { vertical-align:top; text-align:left; }
+
+h1 { padding:0px; margin:0px 0px 25px; font-family:Arial, Helvetica, sans-serif; font-size:1.5em; color:#d55000; line-height:100%; font-weight:normal; }
+h2 { padding:0px; margin:0px 0px 8px; font-family:Arial, Helvetica, sans-serif; font-size:1.2em; color:#000; font-weight:bold; line-height:140%; border-bottom:1px solid #d6d4d4; display:block; }
+h3 { padding:0px; margin:0px 0px 5px; font-family:Arial, Helvetica, sans-serif; font-size:1.1em; color:#000; font-weight:bold; line-height:140%; }
+
+a { color:#005fce; text-decoration:none; }
+a:hover { color:#005fce; text-decoration:underline; }
+a:visited { color:#004aa0; text-decoration:none; }
+
+p { padding:0px; margin:0px 0px 20px; }
+img { padding:0px; margin:0px 0px 20px; border:none; }
+p img, pre img, tt img, li img, h1 img, h2 img { margin-bottom:0px; } 
+
+ul { padding:0px; margin:0px 0px 20px 23px; list-style:square; }
+ul li { padding:0px; margin:0px 0px 7px 0px; }
+ul li ul { padding:5px 0px 0px; margin:0px 0px 7px 23px; }
+ul li ol li { list-style:decimal; }
+ol { padding:0px; margin:0px 0px 20px 0px; list-style:decimal; }
+ol li { padding:0px; margin:0px 0px 7px 23px; list-style-type:decimal; }
+ol li ol { padding:5px 0px 0px; margin:0px 0px 7px 0px; }
+ol li ol li { list-style-type:lower-alpha; }
+ol li ul { padding-top:7px; }
+ol li ul li { list-style:square; }
+
+.content { font-size:1.2em; line-height:140%; padding: 20px; }
+
+pre, code { font-size:12px; }
+tt { font-size: 1.2em; }
+pre { margin:0px 0px 20px; }
+pre.codeinput { padding:10px; border:1px solid #d3d3d3; background:#f7f7f7; }
+pre.codeoutput { padding:10px 11px; margin:0px 0px 20px; color:#4c4c4c; }
+pre.error { color:red; }
+
+@media print { pre.codeinput, pre.codeoutput { word-wrap:break-word; width:100%; } }
+
+span.keyword { color:#0000FF }
+span.comment { color:#228B22 }
+span.string { color:#A020F0 }
+span.untermstring { color:#B20000 }
+span.syscmd { color:#B28C00 }
+
+.footer { width:auto; padding:10px 0px; margin:25px 0px 0px; border-top:1px dotted #878787; font-size:0.8em; line-height:140%; font-style:italic; color:#878787; text-align:left; float:none; }
+.footer p { margin:0px; }
+.footer a { color:#878787; }
+.footer a:hover { color:#878787; text-decoration:underline; }
+.footer a:visited { color:#878787; }
+
+table th { padding:7px 5px; text-align:left; vertical-align:middle; border: 1px solid #d6d4d4; font-weight:bold; }
+table td { padding:7px 5px; text-align:left; vertical-align:top; border:1px solid #d6d4d4; }
+
+
+
+
+
+  </style></head><body><div class="content"><h2>Contents</h2><div><ul><li><a href="#1">sortCurves_hierarchical</a></li><li><a href="#2">Load file info</a></li><li><a href="#3">Pick data from cellData</a></li><li><a href="#4">Principal component analysis (reduce data dimensions)</a></li><li><a href="#5">Hierarchical clustering</a></li><li><a href="#6">Plot the grouped data</a></li><li><a href="#8">findCenterCurves</a></li></ul></div><h2 id="1">sortCurves_hierarchical</h2><p>The script collects the data from the given ROI's cellData array and uses principal component analysis and hierarchical clustering to obtain groupings of the intensity responses. The time parameters are normalized with the response amplitude. The script calls the findCenterCurves functions located at the bottom of the file, which finds the curve that has parameters closest to the group averages.</p><p>User has to navigate into the folder containing the mat-file with the cellData array. The script saves the groupings as well as analytical information of each ROI as .fig and .png (as default).</p><pre class="codeinput">clear
+</pre><h2 id="2">Load file info</h2><pre class="codeinput">mat = dir(<span class="string">'*.mat'</span>);
+load(mat.name)
+str = pwd;
+[~,pname] = fileparts(str);
+nameidx = strfind(str, <span class="string">'\'</span>);
+tp = str(nameidx(end-1)+1:nameidx(end)-1); <span class="comment">% Timepoint name from the filename</span>
+
+names = fieldnames(allSheets); <span class="comment">% ROI names</span>
+names2 = {<span class="string">'maxAmplitude'</span>, <span class="string">'rise50'</span>, <span class="string">'time2max'</span>, <span class="string">'decay50'</span>, <span class="string">'duration50'</span>};
+co = [0    0.4470    0.7410;
+    0.6350    0.0780    0.1840;
+    0.9290    0.6940    0.1250;
+    0    0.5000         0]; <span class="comment">% colors for the grouping plots</span>
+
+[q, p] = size(cellData);
+nCells = 0; <span class="comment">% Cell counter, to be displayed in the plots.</span>
+
+<span class="keyword">for</span> m = 1:p
+</pre><h2 id="3">Pick data from cellData</h2><pre class="codeinput">    array = zeros(5, q);
+    h = figure(<span class="string">'units'</span>,<span class="string">'normalized'</span>,<span class="string">'outerposition'</span>,[0 0 1 1]);
+    set(h,<span class="string">'DefaultAxesColorOrder'</span>,co);
+
+    <span class="keyword">for</span> r = 1:q
+
+        <span class="keyword">if</span> isempty(cellData{r,m}) == 1
+
+            <span class="comment">% If the cell object is empty, mark all parameters as zero.</span>
+            array(1:5,r) = [0;0;0;0;0];
+
+        <span class="keyword">elseif</span> cellData{r,m}.isDiscarded == 1 || isempty(cellData{r,m}.maxAmplitude) == 1
+
+            <span class="comment">% If the data is discarded, mark all parameters as zero.</span>
+            array(1:5,r) = [0;0;0;0;0];
+
+        <span class="keyword">else</span>
+            <span class="comment">% Extract the parameters to an array.</span>
+            array(1,r) = cellData{r,m}.(names2{1});
+            array(2,r) = cellData{r,m}.(names2{2});
+            array(3,r) = cellData{r,m}.(names2{3});
+            array(4,r) = cellData{r,m}.(names2{4});
+            array(5,r) = cellData{r,m}.(names2{5});
+
+            nCells = nCells + 1;
+
+        <span class="keyword">end</span>
+
+
+    <span class="keyword">end</span>
+
+    data = array';
+    toKeep = data(:,5) &gt; 0; <span class="comment">% Leave out the data marked as zero (empty and discarded cells).</span>
+    data = data(toKeep, :);
+    data(:,6) = bsxfun(@minus, data(:,3), data(:,2)); <span class="comment">%time2max-rise50, to</span>
+    maxAmplitude = data(:,1);                         <span class="comment">%describe the left side of the peak</span>
+    <span class="comment">% Normalize each time variable with the first column (amplitude)</span>
+    tmax = data(:,2)./data(:,1);
+    rise50 = data(:,3)./data(:,1);
+    decay50 = data(:,4)./data(:,1);
+    duration50 = data(:,5)./data(:,1);
+    tmaxRise50 = data(:,6)./data(:,1);
+    <span class="comment">% convert the array into a table</span>
+    scaledData = table(maxAmplitude, tmax, rise50, duration50, tmaxRise50, decay50);
+    <span class="comment">% Normalization with z-score</span>
+    func = @(x) zscore(x);
+    Z = varfun(func, scaledData);
+    <span class="comment">% Rule out outliers over 4 SDs from the means.</span>
+    relevantZ = abs(Z{:,:}) &lt;= 4;
+    relevantZ = ~any(relevantZ(:,:) == 0, 2);
+    Z = Z(relevantZ,:);
+    Z.Properties.VariableNames = scaledData.Properties.VariableNames;
+
+    colorlist = <span class="string">'brgk'</span>;
+    symbols = <span class="string">'oooo'</span>;
+</pre><h2 id="4">Principal component analysis (reduce data dimensions)</h2><p>See Matlab documentation for pca for more info. Convert the data into new coordinates to find out which ones contribute the most to the variance.</p><pre class="codeinput">    [coeff,Y,latent,tsquared,pexp] = pca(Z{:,:});
+</pre><h2 id="5">Hierarchical clustering</h2><p>See Matlab documentation for cluster for more info.</p><pre class="codeinput">    <span class="comment">% The clustering uses the data in the new coordinate space obtained</span>
+    <span class="comment">% from the pca.</span>
+    links = linkage(Y, <span class="string">'ward'</span>);
+    distances = pdist(Y);
+    c = cophenet(links, distances);
+    clustev = evalclusters(Y,<span class="string">'linkage'</span>,<span class="string">'silhouette'</span>,<span class="string">'KList'</span>,1:4);
+    nGroups = clustev.OptimalK;
+    hgrp = cluster(links, <span class="string">'maxclust'</span>, nGroups);
+
+    <span class="comment">% Plot the results of the pca analysis as a pareto chart.</span>
+    ax1 = subplot(2,4,1, <span class="string">'align'</span>);
+    varNames = {<span class="string">'pc1'</span>, <span class="string">'pc2'</span>, <span class="string">'pc3'</span>, <span class="string">'pc4'</span>, <span class="string">'pc5'</span>, <span class="string">'pc6'</span>, <span class="string">'pc7'</span>};
+    pareto(pexp, varNames)
+    title(<span class="string">'Best principal components'</span>)
+
+    <span class="comment">% Scatter plots of three different parameter spaces from the three best</span>
+    <span class="comment">% principal components.</span>
+
+    <span class="comment">% Scatter 1</span>
+    ax2 = subplot(2,4,2, <span class="string">'align'</span>);
+    gscatter(Y(:,1),Y(:,2),hgrp, co(1:nGroups,:), symbols(1:nGroups))
+    title(<span class="string">'pc1,pc2'</span>)
+    xlabel([<span class="string">'pc1 ('</span>, num2str(round(pexp(1))), <span class="string">'%)'</span>])
+    ylabel([<span class="string">'pc2 ('</span>, num2str(round(pexp(2))), <span class="string">'%)'</span>])
+
+    <span class="comment">% Scatter 2</span>
+    ax3 = subplot(2,4,3, <span class="string">'align'</span>);
+    gscatter(Y(:,2),Y(:,3),hgrp, co(1:nGroups,:), symbols(1:nGroups))
+    title(<span class="string">'pc2,pc3'</span>)
+    xlabel([<span class="string">'pc2 ('</span>, num2str(round(pexp(2))), <span class="string">'%)'</span>])
+    ylabel([<span class="string">'pc3 ('</span>, num2str(round(pexp(3))), <span class="string">'%)'</span>])
+
+    <span class="comment">% Scatter 3</span>
+    ax4 = subplot(2,4,4, <span class="string">'align'</span>);
+    gscatter(Y(:,1),Y(:,3),hgrp, co(1:nGroups,:), symbols(1:nGroups))
+    title(<span class="string">'pc1,pc3'</span>)
+    xlabel([<span class="string">'pc1 ('</span>, num2str(round(pexp(1))), <span class="string">'%)'</span>])
+    ylabel([<span class="string">'pc3 ('</span>, num2str(round(pexp(3))), <span class="string">'%)'</span>])
+
+    <span class="comment">% Silhouette chart (clustering algorithm aims to minimize the</span>
+    <span class="comment">% silhouette values of each cluster)</span>
+    ax5 = subplot(2,4,5, <span class="string">'align'</span>);
+    silhouette(Y, hgrp);
+    title(<span class="string">'Cluster silhouettes'</span>)
+
+    <span class="comment">% Heatmap showing the effect of the original parameters to the</span>
+    <span class="comment">% principal components</span>
+    ax6 = subplot(2,4,6, <span class="string">'align'</span>);
+    imagesc(abs(coeff(:,1:3)))
+    ax6.XTick = 1:3;
+    ax6.XTickLabel = {<span class="string">'pc1'</span>, <span class="string">'pc2'</span>, <span class="string">'pc3'</span>};
+    ax6.YTickLabel = Z.Properties.VariableNames;
+    colorbar(<span class="string">'southoutside'</span>)
+    ytickangle(45)
+    title(<span class="string">'Effect of original variables to pcs'</span>)
+
+    <span class="comment">% Plot showing the differences in each group's original parameters.</span>
+    ax7 = subplot(2,4,7, <span class="string">'align'</span>  );
+    parallelcoords(Z{:,:},<span class="string">'Group'</span>, hgrp, <span class="string">'labels'</span>, Z.Properties.VariableNames, <span class="string">'quantile'</span>, 0.25)
+    title(<span class="string">'Original data variables'</span>)
+    ylabel(<span class="string">'Z-score'</span>)
+    xtickangle(45)
+
+    <span class="comment">% Dendrogram showing the linkages used for clustering.</span>
+    ax8 = subplot(2,4,8, <span class="string">'align'</span>  );
+    dendrogram(links)
+    title(<span class="string">'Dendrogram'</span>)
+    xtickangle(60)
+
+    suptitle([pname(8:end-9),<span class="string">' '</span>,tp,<span class="string">' '</span>,<span class="string">'Hierarchical clustering (N_{tot} = '</span>, num2str(length(hgrp)),<span class="string">')'</span>])
+
+    <span class="comment">% Save the analytics plots to the current folder</span>
+    filename1 = [pname(8:end-9),<span class="string">'-'</span>,tp,<span class="string">'-'</span>,<span class="string">'ROI'</span>,num2str(m),<span class="string">'-analytics'</span>];
+    savefig([filename1,<span class="string">'.fig'</span>])
+    saveas(gcf,[filename1,<span class="string">'.png'</span>])
+</pre><h2 id="6">Plot the grouped data</h2><pre class="codeinput">    h2 = figure(<span class="string">'units'</span>,<span class="string">'normalized'</span>,<span class="string">'outerposition'</span>,[0 0.2 1 0.6]);
+
+    indices = cell(nGroups,1);
+    curves = cell(nGroups,1);
+
+    <span class="keyword">for</span> p = 1:nGroups
+
+        <span class="comment">% Indices of the original cells corresponding</span>
+        <span class="comment">% to the current group in the loop.</span>
+        indices{p} = hgrp == p;
+
+        <span class="comment">% Match the actual curves to the indices.</span>
+        curves{p} = cellData(toKeep == 1,m);
+        curves{p} = curves{p}(indices{p},:);
+
+        subplot(1,4,p, <span class="string">'align'</span>)
+        [w, ~] = size(curves{p});
+        <span class="comment">% Find the best curve to describe the group averages. (See the</span>
+        <span class="comment">% function below).</span>
+        bestCurveIdx = findCenterCurves(hgrp, Z{:,:}, p);
+        bestCurve = curves{p}(bestCurveIdx(1),1);
+
+        x = 1;
+
+        <span class="keyword">while</span> isempty(curves{p,1}{bestCurveIdx(x),1}.relativeData) == 1
+
+            bestCurve = curves{p,1}{bestCurveIdx(x+1),1};
+            x = x+1;
+
+        <span class="keyword">end</span>
+
+        <span class="comment">% Loop through and plot all the curves in the current group.</span>
+        <span class="keyword">for</span> r = 1:w
+
+            hold <span class="string">on</span>
+            box <span class="string">on</span>
+            plot(curves{p}{r,1}.timeVector,curves{p}{r,1}.relativeData, <span class="string">'Color'</span>, co(p,:))
+            ylim([0.9 1.9])
+            xlim([0 600])
+            ylabel(<span class="string">'Relative intensity'</span>)
+            xlabel(<span class="string">'Time (s)'</span>)
+            titleString1 = [tp,<span class="string">' '</span>,pname(8:end-9)];
+            titleString2 = [<span class="string">'ROI'</span>,num2str(m),<span class="string">' group '</span>, num2str(p), <span class="string">' (N = '</span>, num2str(w), <span class="string">')'</span>];
+            title({titleString1,titleString2})
+
+        <span class="keyword">end</span>
+
+        <span class="comment">% The best curve plotted in black</span>
+        plot(bestCurve{1,1}.timeVector, bestCurve{1,1}.relativeData, <span class="string">'Color'</span>, [0 0 0], <span class="string">'LineWidth'</span>, 1)
+        hold <span class="string">off</span>
+
+    <span class="keyword">end</span>
+
+    <span class="comment">% Save the grouping plot to the current folder.</span>
+    filename2 = [pname(8:end-9),<span class="string">'-'</span>,tp,<span class="string">'-'</span>,<span class="string">'ROI'</span>,num2str(m)];
+    savefig([filename2,<span class="string">'.fig'</span>])
+    saveas(gcf,[filename2,<span class="string">'.png'</span>])
+    clear(<span class="string">'curves'</span>)
+</pre><pre class="codeinput"><span class="keyword">end</span>
+</pre><h2 id="8">findCenterCurves</h2><pre class="codeinput"><span class="keyword">function</span> [sortedIdx] = findCenterCurves(groups, coordinates, groupnumber)
+
+<span class="comment">% Finds the curve that is closest to the average values of the given group.</span>
+<span class="comment">% Inputs: groups = the grouping produced by teh clustering algorithm</span>
+<span class="comment">%         coordinates = the original grouping parameters</span>
+<span class="comment">%         groupnumber = the current group number</span>
+<span class="comment">% Returns a vector with the indices of the curves in ascending order of</span>
+<span class="comment">% distance to the group averages.</span>
+
+coordIdx = groups == groupnumber; <span class="comment">% The indices for current group's parameters.</span>
+group = coordinates(coordIdx,1:6); <span class="comment">% The parameters for the current group.</span>
+avgCoordintates = mean(group,1, <span class="string">'omitnan'</span>); <span class="comment">%#ok&lt;*AGROW&gt;</span>
+[h,~] = size(group);
+
+<span class="keyword">for</span> id2 = 1:h
+
+    <span class="comment">% For each group curve, calculate the distance to the group averages.</span>
+    dist(id2) = sqrt((avgCoordintates(1)-group(id2,1))^2+(avgCoordintates(2)-group(id2,2))^2 <span class="keyword">...</span>
+        +(avgCoordintates(3)-group(id2,3))^2+(avgCoordintates(4)-group(id2,4))^2+<span class="keyword">...</span>
+        (avgCoordintates(5)-group(id2,5))^2 +(avgCoordintates(6)-group(id2,6))^2);
+
+<span class="keyword">end</span>
+
+[~, sortedIdx] = sort(dist); <span class="comment">% The indices of the best curves in ascending order.</span>
+
+<span class="keyword">end</span>
+</pre><p class="footer"><br><a href="http://www.mathworks.com/products/matlab/">Published with MATLAB&reg; R2017b</a><br></p></div><!--
+##### SOURCE BEGIN #####
+%% sortCurves_hierarchical
+% The script collects the data from the given ROI's cellData array and uses
+% principal component analysis and hierarchical clustering to obtain groupings 
+% of the intensity responses. The time parameters are normalized with the 
+% response amplitude. The script calls the findCenterCurves functions located 
+% at the bottom of the file, which finds the curve that has parameters closest 
+% to the group averages.
+%
+% User has to navigate into the folder containing the mat-file with the 
+% cellData array. The script saves the groupings as well as analytical 
+% information of each ROI as .fig and .png (as default).
+% 
+
+
+clear
+
+%% Load file info
+mat = dir('*.mat');
+load(mat.name)
+str = pwd;
+[~,pname] = fileparts(str);
+nameidx = strfind(str, '\');
+tp = str(nameidx(end-1)+1:nameidx(end)-1); % Timepoint name from the filename
+
+names = fieldnames(allSheets); % ROI names
+names2 = {'maxAmplitude', 'rise50', 'time2max', 'decay50', 'duration50'};
+co = [0    0.4470    0.7410;
+    0.6350    0.0780    0.1840;
+    0.9290    0.6940    0.1250;
+    0    0.5000         0]; % colors for the grouping plots
+
+[q, p] = size(cellData);
+nCells = 0; % Cell counter, to be displayed in the plots.
+
+for m = 1:p
+    %% Pick data from cellData
+    array = zeros(5, q);
+    h = figure('units','normalized','outerposition',[0 0 1 1]);
+    set(h,'DefaultAxesColorOrder',co);
+    
+    for r = 1:q
+        
+        if isempty(cellData{r,m}) == 1
+            
+            % If the cell object is empty, mark all parameters as zero.
+            array(1:5,r) = [0;0;0;0;0];
+            
+        elseif cellData{r,m}.isDiscarded == 1 || isempty(cellData{r,m}.maxAmplitude) == 1
+            
+            % If the data is discarded, mark all parameters as zero.
+            array(1:5,r) = [0;0;0;0;0];
+            
+        else
+            % Extract the parameters to an array.
+            array(1,r) = cellData{r,m}.(names2{1});
+            array(2,r) = cellData{r,m}.(names2{2});
+            array(3,r) = cellData{r,m}.(names2{3});
+            array(4,r) = cellData{r,m}.(names2{4});
+            array(5,r) = cellData{r,m}.(names2{5});
+            
+            nCells = nCells + 1;
+            
+        end
+        
+        
+    end
+    
+    data = array';
+    toKeep = data(:,5) > 0; % Leave out the data marked as zero (empty and discarded cells).
+    data = data(toKeep, :);
+    data(:,6) = bsxfun(@minus, data(:,3), data(:,2)); %time2max-rise50, to
+    maxAmplitude = data(:,1);                         %describe the left side of the peak
+    % Normalize each time variable with the first column (amplitude)
+    tmax = data(:,2)./data(:,1);
+    rise50 = data(:,3)./data(:,1);
+    decay50 = data(:,4)./data(:,1);
+    duration50 = data(:,5)./data(:,1);
+    tmaxRise50 = data(:,6)./data(:,1);
+    % convert the array into a table
+    scaledData = table(maxAmplitude, tmax, rise50, duration50, tmaxRise50, decay50);
+    % Normalization with z-score
+    func = @(x) zscore(x);
+    Z = varfun(func, scaledData);
+    % Rule out outliers over 4 SDs from the means.
+    relevantZ = abs(Z{:,:}) <= 4;
+    relevantZ = ~any(relevantZ(:,:) == 0, 2);
+    Z = Z(relevantZ,:);
+    Z.Properties.VariableNames = scaledData.Properties.VariableNames;
+    
+    colorlist = 'brgk';
+    symbols = 'oooo';
+    
+    %% Principal component analysis (reduce data dimensions)
+    % See Matlab documentation for pca for more info.
+    % Convert the data into new coordinates to find out which ones
+    % contribute the most to the variance.
+    [coeff,Y,latent,tsquared,pexp] = pca(Z{:,:});
+    
+    
+    %% Hierarchical clustering
+    % See Matlab documentation for cluster for more info.
+    
+    % The clustering uses the data in the new coordinate space obtained
+    % from the pca.
+    links = linkage(Y, 'ward');
+    distances = pdist(Y);
+    c = cophenet(links, distances);
+    clustev = evalclusters(Y,'linkage','silhouette','KList',1:4);
+    nGroups = clustev.OptimalK;
+    hgrp = cluster(links, 'maxclust', nGroups);
+    
+    % Plot the results of the pca analysis as a pareto chart.
+    ax1 = subplot(2,4,1, 'align');
+    varNames = {'pc1', 'pc2', 'pc3', 'pc4', 'pc5', 'pc6', 'pc7'};
+    pareto(pexp, varNames)
+    title('Best principal components')
+    
+    % Scatter plots of three different parameter spaces from the three best
+    % principal components.
+    
+    % Scatter 1
+    ax2 = subplot(2,4,2, 'align');
+    gscatter(Y(:,1),Y(:,2),hgrp, co(1:nGroups,:), symbols(1:nGroups))
+    title('pc1,pc2')
+    xlabel(['pc1 (', num2str(round(pexp(1))), '%)'])
+    ylabel(['pc2 (', num2str(round(pexp(2))), '%)'])
+    
+    % Scatter 2
+    ax3 = subplot(2,4,3, 'align');
+    gscatter(Y(:,2),Y(:,3),hgrp, co(1:nGroups,:), symbols(1:nGroups))
+    title('pc2,pc3')
+    xlabel(['pc2 (', num2str(round(pexp(2))), '%)'])
+    ylabel(['pc3 (', num2str(round(pexp(3))), '%)'])
+    
+    % Scatter 3
+    ax4 = subplot(2,4,4, 'align');
+    gscatter(Y(:,1),Y(:,3),hgrp, co(1:nGroups,:), symbols(1:nGroups))
+    title('pc1,pc3')
+    xlabel(['pc1 (', num2str(round(pexp(1))), '%)'])
+    ylabel(['pc3 (', num2str(round(pexp(3))), '%)'])
+    
+    % Silhouette chart (clustering algorithm aims to minimize the
+    % silhouette values of each cluster)
+    ax5 = subplot(2,4,5, 'align');
+    silhouette(Y, hgrp);
+    title('Cluster silhouettes')
+    
+    % Heatmap showing the effect of the original parameters to the
+    % principal components
+    ax6 = subplot(2,4,6, 'align');
+    imagesc(abs(coeff(:,1:3)))
+    ax6.XTick = 1:3;
+    ax6.XTickLabel = {'pc1', 'pc2', 'pc3'};
+    ax6.YTickLabel = Z.Properties.VariableNames;
+    colorbar('southoutside')
+    ytickangle(45)
+    title('Effect of original variables to pcs')
+    
+    % Plot showing the differences in each group's original parameters.
+    ax7 = subplot(2,4,7, 'align'  );
+    parallelcoords(Z{:,:},'Group', hgrp, 'labels', Z.Properties.VariableNames, 'quantile', 0.25)
+    title('Original data variables')
+    ylabel('Z-score')
+    xtickangle(45)
+    
+    % Dendrogram showing the linkages used for clustering.
+    ax8 = subplot(2,4,8, 'align'  );
+    dendrogram(links)
+    title('Dendrogram')
+    xtickangle(60)
+    
+    suptitle([pname(8:end-9),' ',tp,' ','Hierarchical clustering (N_{tot} = ', num2str(length(hgrp)),')'])
+    
+    % Save the analytics plots to the current folder
+    filename1 = [pname(8:end-9),'-',tp,'-','ROI',num2str(m),'-analytics'];
+    savefig([filename1,'.fig'])
+    saveas(gcf,[filename1,'.png'])
+    
+    
+    %% Plot the grouped data
+    
+    h2 = figure('units','normalized','outerposition',[0 0.2 1 0.6]);
+    
+    indices = cell(nGroups,1);
+    curves = cell(nGroups,1);
+    
+    for p = 1:nGroups
+        
+        % Indices of the original cells corresponding
+        % to the current group in the loop.
+        indices{p} = hgrp == p;
+        
+        % Match the actual curves to the indices.
+        curves{p} = cellData(toKeep == 1,m);
+        curves{p} = curves{p}(indices{p},:);
+        
+        subplot(1,4,p, 'align')
+        [w, ~] = size(curves{p});
+        % Find the best curve to describe the group averages. (See the
+        % function below).
+        bestCurveIdx = findCenterCurves(hgrp, Z{:,:}, p);
+        bestCurve = curves{p}(bestCurveIdx(1),1);
+        
+        x = 1;
+        
+        while isempty(curves{p,1}{bestCurveIdx(x),1}.relativeData) == 1
+            
+            bestCurve = curves{p,1}{bestCurveIdx(x+1),1};
+            x = x+1;
+            
+        end
+        
+        % Loop through and plot all the curves in the current group.
+        for r = 1:w
+            
+            hold on
+            box on
+            plot(curves{p}{r,1}.timeVector,curves{p}{r,1}.relativeData, 'Color', co(p,:))
+            ylim([0.9 1.9])
+            xlim([0 600])
+            ylabel('Relative intensity')
+            xlabel('Time (s)')
+            titleString1 = [tp,' ',pname(8:end-9)];
+            titleString2 = ['ROI',num2str(m),' group ', num2str(p), ' (N = ', num2str(w), ')'];
+            title({titleString1,titleString2})
+            
+        end
+        
+        % The best curve plotted in black
+        plot(bestCurve{1,1}.timeVector, bestCurve{1,1}.relativeData, 'Color', [0 0 0], 'LineWidth', 1)
+        hold off
+        
+    end
+    
+    % Save the grouping plot to the current folder.
+    filename2 = [pname(8:end-9),'-',tp,'-','ROI',num2str(m)];
+    savefig([filename2,'.fig'])
+    saveas(gcf,[filename2,'.png'])
+    clear('curves')
+    
+end
+
+%% findCenterCurves
+function [sortedIdx] = findCenterCurves(groups, coordinates, groupnumber)
+
+% Finds the curve that is closest to the average values of the given group.
+% Inputs: groups = the grouping produced by teh clustering algorithm
+%         coordinates = the original grouping parameters
+%         groupnumber = the current group number
+% Returns a vector with the indices of the curves in ascending order of
+% distance to the group averages.
+
+coordIdx = groups == groupnumber; % The indices for current group's parameters.
+group = coordinates(coordIdx,1:6); % The parameters for the current group.
+avgCoordintates = mean(group,1, 'omitnan'); %#ok<*AGROW>
+[h,~] = size(group);
+
+for id2 = 1:h
+    
+    % For each group curve, calculate the distance to the group averages.
+    dist(id2) = sqrt((avgCoordintates(1)-group(id2,1))^2+(avgCoordintates(2)-group(id2,2))^2 ...
+        +(avgCoordintates(3)-group(id2,3))^2+(avgCoordintates(4)-group(id2,4))^2+...
+        (avgCoordintates(5)-group(id2,5))^2 +(avgCoordintates(6)-group(id2,6))^2);
+    
+end
+
+[~, sortedIdx] = sort(dist); % The indices of the best curves in ascending order.
+
+end
+
+
+
+##### SOURCE END #####
+--></body></html>
