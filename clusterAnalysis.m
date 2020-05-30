@@ -8,7 +8,7 @@
 % editDatabase.m is used to load a single dataset from a database created 
 % by readData.m and provide it's information
 databaseInfo = editDatabase('load', 'single');
-dataset = databaseInfo{1};
+dataset = databaseInfo{1,1};
 datasetName = databaseInfo{2};
 caDatabase = databaseInfo{3};
 databaseName = databaseInfo{4};
@@ -77,14 +77,20 @@ for ROIidx = 1:width
     toKeep = ~isnan(dataArray(:,1));
     dataArray = dataArray(toKeep,:);
     
+    for i = 1:nParameters
+        dataArrays(:,i) = dataArray(dataArray(:,i)~=0, i);
+    end
+    
     % Normalize each time variable with the first column (amplitude) to
     % find the true differences independent of the amplitude
-    maxAmplitude = dataArray(:,1);
-    rise50 = dataArray(:,2)./dataArray(:,1);
-    time2max = dataArray(:,3)./dataArray(:,1);
-    firstHalf = dataArray(:,4)./dataArray(:,1);
-    decay50 = dataArray(:,5)./dataArray(:,1);
-    duration50 = dataArray(:,6)./dataArray(:,1);
+    maxAmplitude = dataArrays(:,1);
+    rise50 = dataArrays(:,2)./dataArrays(:,1);
+    time2max = dataArrays(:,3)./dataArrays(:,1);
+    firstHalf = dataArrays(:,4)./dataArrays(:,1);
+    decay50 = dataArrays(:,5)./dataArrays(:,1);
+    duration50 = dataArrays(:,6)./dataArrays(:,1);
+    
+    dataArrays = [];
     
     % convert the array into a table
     scaledData = table(maxAmplitude, rise50, time2max, firstHalf, decay50, duration50);
@@ -115,7 +121,7 @@ for ROIidx = 1:width
     links = linkage(Y, 'ward');
     distances = pdist(Y);
     c = cophenet(links, distances);
-    clustev = evalclusters(Y,'linkage','silhouette','KList',1:4);
+    clustev = evalclusters(Y,'linkage','silhouette','KList',[1:4]);
     nGroups = clustev.OptimalK;
     hgrp = cluster(links, 'maxclust', nGroups);
     
@@ -168,7 +174,7 @@ for ROIidx = 1:width
     
     % Plot showing the differences in each group's original parameters.
     ax7 = subplot(2,4,7, 'align'  );
-    parallelcoords(Z{:,:},'Group', hgrp, 'labels', Z.Properties.VariableNames, 'quantile', 0.25)
+    parallelcoords(Z{:,:},'Group', hgrp, 'labels', Z.Properties.VariableNames, 'quantile', 0.5)
     title('Original data variables')
     ylabel('Z-score')
     xtickangle(45)
@@ -179,9 +185,9 @@ for ROIidx = 1:width
     title('Dendrogram')
     xtickangle(60)
     
-    suptitle([datasetName{1},' ROI ', num2str(ROIidx),' Hierarchical clustering (Ntot = ', num2str(length(hgrp)),')'])
+    suptitle([datasetName,' ROI ', num2str(ROIidx),' Hierarchical clustering (Ntot = ', num2str(length(hgrp)),')'])
     % Save the clusterinfo figure to the current folder
-    savefig([datasetName{1},'_clusterInfo_ROI', num2str(ROIidx),'.fig'])
+    savefig([datasetName,'_clusterInfo_ROI', num2str(ROIidx),'.fig'])
     
     %% Plot the grouped data
     
@@ -247,9 +253,9 @@ for ROIidx = 1:width
 
     end
     
-    suptitle([datasetName{1},' ROI ', num2str(ROIidx),' Hierarchical clustering (Ntot = ', num2str(length(hgrp)),')'])
+    suptitle([datasetName,' ROI ', num2str(ROIidx),' Hierarchical clustering (Ntot = ', num2str(length(hgrp)),')'])
     % Save the grouping figure to the current folder
-    savefig([datasetName{1},'_grouping_ROI', num2str(ROIidx),'.fig'])
+    savefig([datasetName,'_grouping_ROI', num2str(ROIidx),'.fig'])
     
     % Reset dataArray
     dataArray = zeros(height, nParameters);
@@ -257,7 +263,9 @@ for ROIidx = 1:width
 end
 
 % Save the dataset to the database with the new grouping info
-caDatabase.(datasetName{1}) = dataset;
+spaces = find(datasetName == ' ');
+datasetName(spaces) = '_';
+caDatabase.(datasetName) = dataset;
 save(databaseName, 'caDatabase');
 clear
 

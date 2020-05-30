@@ -13,7 +13,11 @@ coords = zeros(1,3);
 
 % The ratio of pixels to micrometers in the original image (check from
 % ImageJ) [move to user input later]
-pixelRatio = 300/65;
+answer = inputdlg('Enter pixels/length (check from ImageJ)', 'Input', 1);
+divMark = find(answer{1} == '/');
+pixels = answer{1}(1:divMark-1);
+microns = answer{1}(divMark+1:end);
+pixelRatio = str2double(pixels)/str2double(microns);
 
 % colors for the grouping plots (each row corresponds one color)
 groupColors =  [0         0.4470    0.7410;
@@ -22,19 +26,25 @@ groupColors =  [0         0.4470    0.7410;
                 0         0.5000    0
                 0.5       0.5       0.5];
 
-for ROIidx = 1:width
-        
-    % Ask user to browse for the image file 
-    [img, path] = uigetfile('*.*','Select the image file you want to analyze');
-    currentFolder = pwd;
+figure('units','normalized','outerposition',[0 0 1 1]);
+% Ask user to browse for the image file 
+[img, path] = uigetfile('*.*','Select the image file you want to analyze', 'MultiSelect', 'on');
+currentFolder = pwd;
 
-    if strcmp(path, currentFolder) == 0
-        cd(path)
-    end
-        
+if strcmp(path, currentFolder) == 0
+    cd(path)
+end
+
+for ROIidx = 1:width
+
+    % Leave out empty cells
+    notEmpty = find(~cellfun(@isempty,dataset(:,ROIidx)));
+    height = length(notEmpty);
+    
     % Read the image to Matlab
-    I = imread(img);
-    figure
+    I = imread(img{ROIidx});
+
+    subplot(1, width, ROIidx)
     
     for cellIdx = 1:height
         
@@ -71,10 +81,10 @@ for ROIidx = 1:width
         
         % View the edited image
         imshow(I)
-        title(img, 'Interpreter', 'none')
+        title(img{ROIidx}(1:end-4), 'Interpreter', 'none')
     end
     
     % Save the edited image
-    imwrite(I, [img(1:end-4), '_edited.jpg'])
+    imwrite(I, [img{ROIidx}(1:end-4), '_edited.jpg'])
     
 end

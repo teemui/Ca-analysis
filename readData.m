@@ -25,7 +25,7 @@ if strcmp(path, currentFolder) == 0
     cd(path)
 end
 
-dataSet = cell(length(xlsxFiles),2);
+dataset = cell(length(xlsxFiles),2);
 
 for fileIdx = 1:length(xlsxFiles)
     
@@ -54,13 +54,12 @@ for fileIdx = 1:length(xlsxFiles)
     cellData = cell(maxSheetLength/4,length(sheetNames));
     
     % Ask user input for sampling rate and dataset info
-    prompt = {['Enter name for the dataset (leave empty to use the filename "',...
-                            xlsxFiles{fileIdx}(1:end-5), '" ):'], 'Sample interval (in seconds) of the measurement:', };
+    prompt = {'Enter name for the dataset :', 'Sample interval (in seconds) of the measurement:', 'Dataset info (optional)'};
     dlgTitle = ['File ', num2str(fileIdx), ' of ', num2str(length(xlsxFiles))];
     numLines = 1;
-    def = {xlsxFiles{fileIdx}(1:end-5), '0.5'};
+    def = {['ds_', xlsxFiles{fileIdx}(1:end-5)], '0.5', ''};
     answer = inputdlg(prompt, dlgTitle, numLines, def);     
-    dataSet{fileIdx,1} = answer{1};
+    dataset{fileIdx,1} = answer{1};
     rate = str2num(answer{2});
     
     % Loop through the sheets and convert the data to intensityResponse class
@@ -77,8 +76,10 @@ for fileIdx = 1:length(xlsxFiles)
             radius = round(sqrt(allSheets.(sheetNames{sheetIdx})(1,cellIdx)/pi));
             a.rawData = allSheets.(sheetNames{sheetIdx})(:,cellIdx+1);
             a.samplingInterval = rate;
+            a.datasetInfo = answer{3};
             a.coordinates = [allSheets.(sheetNames{sheetIdx})(1,cellIdx+2), allSheets.(sheetNames{sheetIdx})(1,cellIdx+3), radius];
             a.indices = [sheetIdx, cellDataIdx];
+            a.fitIndices = [1 201];
             a.isDiscarded = 0; 
             a.isSkipped = 0;
             cellData{cellDataIdx,sheetIdx} = a;
@@ -88,13 +89,13 @@ for fileIdx = 1:length(xlsxFiles)
     end
     
     % Collect the datasets to a cell array to be saved in a database
-    dataSet{fileIdx,2} = cellData;
+    dataset{fileIdx,2} = cellData;
 
 end
 
 % Ask user input for which database the dataset should be added to
 
-addToDataBase(dataSet);
+addToDataBase(dataset);
 
 clear
 
@@ -138,7 +139,7 @@ while(true)
     elseif (answer == 2)
      
         % Create new database
-        dbName = inputdlg('Name of the database (including .mat):', ...
+        dbName = inputdlg('Name of the database:', ...
                             'Create new database', 1, {''});
         
         for dbIdx = 1:length(data(:,1))

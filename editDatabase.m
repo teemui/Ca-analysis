@@ -45,18 +45,25 @@ if(strcmp(action, 'load'))
     
     % Pick the dataset(s) corresponding to the selected indices
     dsName_selected = datasetNames(dsIdx);
+    dataset = cell(length(dsName_selected), 1);
     
     for i = 1:length(dsName_selected)
         % For each selected database, check its size and extract it to the
         % dataset variable
         [height, width] = size(caDatabase.(dsName_selected{i}));
-        dataset(1:height,1:width) = caDatabase.(dsName_selected{i});
+        dataset{i, 1}(1:height,1:width) = caDatabase.(dsName_selected{i});
+        underscores = dsName_selected{i} == '_';
+        dsName_selected{i}(underscores) = ' ';
     end
     
 end
 
 % The final product to be returned
-endProduct = {dataset, dsName_selected, caDatabase, dbName};
+if(strcmp(amount, 'multi'))
+    endProduct = {dataset, dsName_selected, caDatabase, dbName};
+else
+    endProduct = {dataset{1,1}, dsName_selected{1,1}, caDatabase, dbName};
+end
 
 
 end

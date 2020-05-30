@@ -6,7 +6,7 @@ classdef intensityResponse < dynamicprops
     %% properties
     properties
         
-        datasetInfo % user input of the dataset information
+        datasetInfo % dataset information from user input
         samplingInterval % in seconds
         indices % [sheetNumber (ROI), cellNumber]
         coordinates %[X, Y, radius] cell location in  the image
@@ -20,7 +20,7 @@ classdef intensityResponse < dynamicprops
         interpolatedData %slot for possible interpolated data (not used now)
         baselineModel % baseline fitted model from bleach correction
         
-        fitIndices = [1, 301] % [fitStart, fitEnd] for the baseline correction
+        fitIndices % [fitStart, fitEnd] for the baseline correction
         startmaxIndices = [0, 0] % [startIdx, maxIdx]
         halfwayIndices = [0, 0] % [rise50idx, decay50idx]
         sparkInterval = [0, 0] % [peakStart, peakEnd] interval for Ca-spark peak detection
@@ -37,7 +37,7 @@ classdef intensityResponse < dynamicprops
         
         sparkTime  = 0; % duration of Ca-sparking
         sparkStartTime  = 0; % time value when the Ca-sparking starts
-        avgSparkDistance  = 0; % average time between the Ca-spark peaks (max values)
+        avgSparkInterval  = 0; % average time between the Ca-spark peaks (max values)
         avgSparkAmplitude = 0;
         maxSparkAmplitude = 0;
         numberOfSparks  = 0; % total number of Ca-spark peaks in the sparking interval
@@ -45,7 +45,7 @@ classdef intensityResponse < dynamicprops
         isAnalyzed = 0; %logical index whether the cell is analyzed
         isDiscarded = 0; %logical index for possible discarding
         isSkipped  = 0; %logical index for possible skipping
-        caSparking = 0; % logical index whether the response has Ca-sparks
+        isSparking = 0; % logical index whether the response has Ca-sparks
         
     end
     
@@ -288,17 +288,16 @@ classdef intensityResponse < dynamicprops
             
             hold on
             plot(time, obj.filteredData, 'HandleVisibility', 'off')
-            plot(time, responseBaseline)
-            plot(time, halfwayVector)
+            plot(time, responseBaseline, '--k')
+            plot(time, halfwayVector, '-.r')
             plot(time(obj.startmaxIndices(1)), obj.filteredData(obj.startmaxIndices(1)), 'rx', 'LineWidth', 2)
             plot(time(obj.startmaxIndices(2)), obj.filteredData(obj.startmaxIndices(2)), 'kx', 'LineWidth', 2)
             plot(time(obj.halfwayIndices(1)), obj.filteredData(obj.halfwayIndices(1)), 'gx', 'LineWidth', 2)
             plot(time(obj.halfwayIndices(2)), obj.filteredData(obj.halfwayIndices(2)), 'yx', 'LineWidth', 2)
-            plot(obj.timeVector(obj.highSparkPeaks), obj.filteredData(obj.highSparkPeaks), 'rv','MarkerFaceColor','b', 'MarkerSize', 4, 'HandleVisibility', 'off')
-            plot(obj.timeVector(obj.lowSparkPeaks), obj.filteredData(obj.lowSparkPeaks), 'rs','MarkerFaceColor','b', 'HandleVisibility', 'off')
-            
+            plot(obj.timeVector(obj.highSparkPeaks), obj.filteredData(obj.highSparkPeaks), 'rv','MarkerFaceColor','b', 'MarkerSize', 4)
+            %plot(obj.timeVector(obj.lowSparkPeaks), obj.filteredData(obj.lowSparkPeaks), 'rs','MarkerFaceColor','b', 'HandleVisibility', 'off')
             title('Analyzed data', 'Interpreter', 'none')
-            legend('Baseline', 'Halfway value', 'Response start', 'Response maximum', 'Halfway (rise)', 'Halfway (decay)', 'Location', 'best')
+            legend('Baseline', 'Halfway value', 'Response start', 'Response maximum', 'Halfway (rise)', 'Halfway (decay)', 'Spark peaks', 'Location', 'best')
             legend('boxoff')
             xlabel('time [s]')
             ylabel('Normalized intensity')
@@ -314,7 +313,7 @@ classdef intensityResponse < dynamicprops
             % saves them as intensityResponse object properties
             
             % Mark the response to have sparking
-            obj.caSparking = 1;
+            obj.isSparking = 1;
             % Change the peak time interval to index interval using the
             % data sampling interval
             peakIdxInterval = round(peakTimeInterval ./ obj.samplingInterval);
@@ -341,7 +340,7 @@ classdef intensityResponse < dynamicprops
             obj.lowSparkPeaks = lowPeakIdx + peakIdxInterval(1) - 1;
 
             % Calculate and save the spark data as object properties
-            obj.avgSparkDistance = mean(diff(obj.highSparkPeaks));
+            obj.avgSparkInterval = mean(diff(obj.highSparkPeaks));
             obj.avgSparkAmplitude = mean(obj.filteredData(obj.highSparkPeaks) - obj.filteredData(obj.lowSparkPeaks)) + 1;
             obj.maxSparkAmplitude = max(obj.filteredData(obj.highSparkPeaks) - obj.filteredData(obj.lowSparkPeaks)) + 1;
             obj.sparkTime = obj.timeVector(obj.sparkInterval(2)) - obj.timeVector(obj.sparkInterval(1));
