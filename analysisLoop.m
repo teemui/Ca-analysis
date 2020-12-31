@@ -6,6 +6,9 @@
 % editDatabase.m is used to load a single dataset from a database created
 % by readData.m and provide it's information
 databaseInfo = editDatabase('load', 'single');
+
+% If nothing is selected or user clicks cancel in the selection window ->
+% return to main menu
 if(isempty(databaseInfo))
     return
 end
@@ -25,6 +28,12 @@ dlgTitle = 'Input';
 num_lines = 1;
 def = {'',''};
 answer = inputdlg(prompt, dlgTitle, num_lines, def);
+
+% If user clicks cancel -> return to main menu
+if isempty(answer)
+    return
+end
+
 ROI = str2num(answer{1}); cellIdx = str2num(answer{2});
 
 if(isempty(cellIdx))
@@ -54,6 +63,8 @@ for ROIidx = ROI:numberOfROIs
             figure('units','normalized','outerposition',[0 0 1 1]);
             subplot(1,2,1)
             plotBleachCorrection(obj);
+            spaces = find(datasetName == '_');
+            datasetName(spaces) = ' ';
             suptitle({datasetName; [' ROI ', num2str(obj.indices(1)), ' cell ', num2str(obj.indices(2))]})
             
             if counter == 1
@@ -78,8 +89,33 @@ for ROIidx = ROI:numberOfROIs
                 obj.fitIndices = round(2*startBounds);
                 close
             elseif(answer2 == 4)
-                % Discard the response and move to next one
+                % Discard the response, clear the variables if the response 
+                % has been analyzed previously and move to next one
                 obj.isDiscarded = true;
+                obj.isAnalyzed = false;
+                obj.isSkipped = false;
+                
+                obj.fitIndices = [1 round(length(obj.timeVector)/6)];
+                obj.startmaxIndices = [0, 0];
+                obj.halfwayIndices = [0, 0];
+                obj.sparkInterval = [0, 0];
+                obj.highSparkPeaks = []; 
+                obj.lowSparkPeaks = [];
+                
+                obj.maxAmplitude = [];
+                obj.rise50 = [];
+                obj.time2max = [];
+                obj.firstHalf = [];
+                obj.decay50 = [];
+                obj.duration50 = [];
+                
+                obj.sparkTime  = 0; 
+                obj.sparkStartTime  = 0; 
+                obj.avgSparkInterval  = 0;
+                obj.avgSparkAmplitude = 0;
+                obj.maxSparkAmplitude = 0;
+                obj.numberOfSparks  = 0;
+                
                 close
                 break
             elseif(answer2 == 1 || answer2 == 3)
@@ -147,7 +183,7 @@ for ROIidx = ROI:numberOfROIs
                         [points, ~, button] = ginput(4);
                         
                         if button(1) == 1
-                            obj.startmaxIndices(1) = round(2*points(1));
+                            obj.startmaxIndices(1) = round(points(1)/obj.samplingInterval);
                             % If user selects a new start point, it
                             % overrides the startPointGuess
                             whichPointsToAnalyze(1) = false;
@@ -156,19 +192,19 @@ for ROIidx = ROI:numberOfROIs
                         if button(2) == 1
                             % If user selects a new halfway point, it
                             % overrides the previously calculated one
-                            obj.halfwayIndices(1) = round(2*points(2));
+                            obj.halfwayIndices(1) = round(points(2)/obj.samplingInterval);
                             whichPointsToAnalyze(2) = false;
                         end
                         
                         if button(3) == 1
-                            obj.startmaxIndices(2) = round(2*points(3));
+                            obj.startmaxIndices(2) = round(points(3)/obj.samplingInterval);
                             % If user selects a new maximum point, it
                             % overrides the previously calculated one
                             whichPointsToAnalyze(3) = false;
                         end
                         
                         if button(4) == 1
-                            obj.halfwayIndices(2) = round(2*points(4));
+                            obj.halfwayIndices(2) = round(points(4)/obj.samplingInterval);
                             % If user selects a new halfway point, it
                             % overrides the previously calculated one
                             whichPointsToAnalyze(4) = false;

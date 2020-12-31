@@ -12,6 +12,7 @@ while(true)
         'Cluster analysis',...
         'Location data',...
         'Statistical visualizations',...
+        'Merge databases',...
         'Exit');
 
     if(mainMenuResponse == 1)
@@ -59,8 +60,24 @@ while(true)
         clc
         statisticsBlock
         clc
-    
+        
     elseif(mainMenuResponse == 7)
+        
+        % Option to merge multiple databases for statistical comparisons
+        clc
+        merged = editDatabase('merge', '');
+        % If user selects cancel in the dialog window, continue back to the
+        % main loop
+        if isempty(merged)
+            continue
+        end
+        
+        dbName = merged{2}{1}; caDatabase = merged{1};
+        save(dbName, 'caDatabase')
+        uiwait(msgbox('Merge successful!', 'Message', 'modal'));
+        clc
+        
+    elseif(mainMenuResponse == 8)
         
         break;
         

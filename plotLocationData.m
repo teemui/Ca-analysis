@@ -4,6 +4,13 @@
 % editDatabase.m is used to load a single dataset from a database created 
 % by readData.m and provide it's information
 databaseInfo = editDatabase('load', 'single');
+
+% If nothing is selected or user clicks cancel in the selection window ->
+% return to main menu
+if(isempty(databaseInfo))
+    return
+end
+
 dataset = databaseInfo{1};
 datasetName = databaseInfo{2};
 caDatabase = databaseInfo{3};
@@ -42,7 +49,13 @@ for ROIidx = 1:width
     height = length(notEmpty);
     
     % Read the image to Matlab
-    I = imread(img{ROIidx});
+    if ischar(img)
+        % If only one ROI -> img is a char variable
+        I = imread(img);
+    else
+        % If multiple ROIs -> img is a cell variable
+        I = imread(img{ROIidx});
+    end
 
     subplot(1, width, ROIidx)
     
@@ -81,10 +94,18 @@ for ROIidx = 1:width
         
         % View the edited image
         imshow(I)
-        title(img{ROIidx}(1:end-4), 'Interpreter', 'none')
+        if ischar(img)
+            title(img(1:end-4), 'Interpreter', 'none')
+        else
+            title(img{ROIidx}(1:end-4), 'Interpreter', 'none')
+        end
     end
     
     % Save the edited image
-    imwrite(I, [img{ROIidx}(1:end-4), '_edited.jpg'])
+    if ischar(img)
+        imwrite(I, [img(1:end-4), '_edited.jpg'])
+    else
+        imwrite(I, [img{ROIidx}(1:end-4), '_edited.jpg'])
+    end
     
 end

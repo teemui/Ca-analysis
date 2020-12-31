@@ -237,6 +237,7 @@ NdiscardedROI = 0;
 NcellsROI = 0;
 NtotROI = 0;
 maxInt = 0; % max intensity for y-ax limits
+minInt = 1; % min intensity for y-axis limits
 spIdx = 0; % subplot index
 
 
@@ -316,9 +317,13 @@ for ROIidx = 1:numberOfROIs
         Ntot = Ntot + 1;
         NtotROI = NtotROI + 1;
         
-        % Find max intensity of the dataset for the y-axis limits
+        % Find max and min intensity of the dataset for the y-axis limits
         if max(dataset{cellIdx, ROIidx}.relativeData) > maxInt
             maxInt = max(dataset{cellIdx, ROIidx}.relativeData);
+        end
+        
+        if min(dataset{cellIdx, ROIidx}.relativeData) < minInt
+            minInt = min(dataset{cellIdx, ROIidx}.relativeData);
         end
         
     end
@@ -333,8 +338,8 @@ end
 % Set the y-axis limits for all subplots as the same
 for i = 1:length(subplots)
     if isa(subplots(1,i),'matlab.graphics.axis.Axes')
-        ylim(subplots(1,i), [0.9, maxInt+0.1*(maxInt-0.9)])
-        xlim(subplots(1,i), [0, 600])
+        ylim(subplots(1,i), [minInt-0.01*(maxInt-minInt), maxInt+0.1*(maxInt-minInt)])
+        xlim(subplots(1,i), [0, length(dataset{cellIdx, ROIidx}.relativeData)])
     end
 end
 

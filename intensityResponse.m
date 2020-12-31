@@ -38,8 +38,8 @@ classdef intensityResponse < dynamicprops
         sparkTime  = 0; % duration of Ca-sparking
         sparkStartTime  = 0; % time value when the Ca-sparking starts
         avgSparkInterval  = 0; % average time between the Ca-spark peaks (max values)
-        avgSparkAmplitude = 0;
-        maxSparkAmplitude = 0;
+        avgSparkAmplitude = 0; % average amplitude of the spark peaks
+        maxSparkAmplitude = 0; % max amplitude of the spark peaks
         numberOfSparks  = 0; % total number of Ca-spark peaks in the sparking interval
         
         isAnalyzed = 0; %logical index whether the cell is analyzed
@@ -136,18 +136,25 @@ classdef intensityResponse < dynamicprops
             if(whichPointsToAnalyze(3))
                 
                 % If max value is to be analyzed, find the maximum value
-                % and it's index, starting from the response start index
+                % and it's index
                 [maxIntensity, obj.startmaxIndices(2)] = ...
-                    max(obj.filteredData(obj.startmaxIndices(1):end));
-                
-                if obj.startmaxIndices(1) + obj.startmaxIndices(2) > length(obj.filteredData)
-                    % For cases where the max index would excede the length of
+                    max(obj.filteredData);
+                  
+                if obj.startmaxIndices(2) > length(obj.filteredData)
+                    % For cases where the max index would exceed the length of
                     % the data vector
-                    obj.startmaxIndices(2) = obj.startmaxIndices(1) + obj.startmaxIndices(end) - 2;
-                else
-                    % Add start index to the max index to get the actua max
-                    % index
-                    obj.startmaxIndices(2) = obj.startmaxIndices(1) + obj.startmaxIndices(2);
+                    obj.startmaxIndices(2) = obj.startmaxIndices(end) - 2;
+                end
+                
+                if obj.startmaxIndices(2) <= obj.startmaxIndices(1)
+                    % If the max intensity appears before the starting
+                    % point guess, move the starting point before the max
+                    % index.
+                    if obj.startmaxIndices(2) > 2
+                        obj.startmaxIndices(1) = obj.startmaxIndices(2) - 2;
+                    else
+                        obj.startmaxIndices(1) = 1;
+                    end
                 end
                 
             else

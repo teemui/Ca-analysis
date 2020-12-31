@@ -8,6 +8,13 @@
 % editDatabase.m is used to load a single dataset from a database created 
 % by readData.m and provide it's information
 databaseInfo = editDatabase('load', 'single');
+
+% If nothing is selected or user clicks cancel in the selection window ->
+% return to main menu
+if(isempty(databaseInfo))
+    return
+end
+
 dataset = databaseInfo{1,1};
 datasetName = databaseInfo{2};
 caDatabase = databaseInfo{3};
@@ -29,7 +36,7 @@ dataArray = zeros(height, nParameters);
 discardedIdx = 1;
 dataIdx = 1;
 % Find max intensity value of the dataset (for plotting)
-maxY = findMaxY(dataset);
+extremeY = findExtremeY(dataset);
 
 
 for ROIidx = 1:width
@@ -56,7 +63,7 @@ for ROIidx = 1:width
             
         else
             
-            % If the data is discarded, mark the parameters as zero and
+            % If the data is discarded, mark the parameters as NaN and
             % save the curve in the discardedCurves array (for plotting
             % later)
             dataArray(cellIdx, 1) = NaN;
@@ -76,9 +83,14 @@ for ROIidx = 1:width
     % Leave out rows of discarded cells from the analysis
     toKeep = ~isnan(dataArray(:,1));
     dataArray = dataArray(toKeep,:);
+    j = 1;
     
-    for i = 1:nParameters
-        dataArrays(:,i) = dataArray(dataArray(:,i)~=0, i);
+    % Check for rows that have single parameter zero values
+    for i = 1:length(dataArray)
+        if ~any(dataArray(i,:) == 0)
+            dataArrays(j,:) = dataArray(i,:);
+            j = j + 1;
+        end
     end
     
     % Normalize each time variable with the first column (amplitude) to
@@ -226,7 +238,7 @@ for ROIidx = 1:width
             hold on
             box on
             plot(curves{groupIdx}{r,1}.timeVector,curves{groupIdx}{r,1}.relativeData, 'Color', groupColors(groupIdx,:), 'HandleVisibility', 'off')
-            ylim([0.9 maxY+0.1*(maxY-0.9)])
+            ylim([extremeY(1)-0.01*(extremeY(2)-extremeY(1)) extremeY(2)+0.01*(extremeY(2)-extremeY(1))])
             xlength = length(curves{groupIdx}{r,1}.timeVector)*curves{groupIdx}{r,1}.samplingInterval;
             xlim([0 1.1*xlength])
             ylabel('Relative intensity')
@@ -269,11 +281,11 @@ caDatabase.(datasetName) = dataset;
 save(databaseName, 'caDatabase');
 clear
 
-function maxY = findMaxY(data)
+function extremeY = findExtremeY(data)
 
 % Loops through the given dataset and finds the maximum relative intensity
 
-maxY = 0;
+extremeY = [1, 0];
 [~, width] = size(data);
 
     for ROIidx = 1:width
@@ -282,10 +294,16 @@ maxY = 0;
         height = length(notEmpty);
         
         for cellIdx = 1:height
-           
-            if max(data{cellIdx, ROIidx}.relativeData) > maxY
+            
+            if min(data{cellIdx, ROIidx}.relativeData) < extremeY(1)
                 
-                maxY = max(data{cellIdx, ROIidx}.relativeData);
+                extremeY(1) = min(data{cellIdx, ROIidx}.relativeData);
+                
+            end
+           
+            if max(data{cellIdx, ROIidx}.relativeData) > extremeY(2)
+                
+                extremeY(2) = max(data{cellIdx, ROIidx}.relativeData);
                 
             end
             

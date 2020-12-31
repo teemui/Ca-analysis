@@ -5,6 +5,10 @@ xlsxFiles = {};
 % The file selection window
 [files, path] = uigetfile('*.xlsx', 'Select the spreadsheet you want to read in.', 'MultiSelect', 'on');
 
+% If user selects "cancel" in the selection window -> return to main menu
+if files == 0
+    return
+end
 % Current folder path
 currentFolder = pwd;
 
@@ -79,7 +83,7 @@ for fileIdx = 1:length(xlsxFiles)
             a.datasetInfo = answer{3};
             a.coordinates = [allSheets.(sheetNames{sheetIdx})(1,cellIdx+2), allSheets.(sheetNames{sheetIdx})(1,cellIdx+3), radius];
             a.indices = [sheetIdx, cellDataIdx];
-            a.fitIndices = [1 201];
+            a.fitIndices = [1 round(length(a.timeVector)/6)];
             a.isDiscarded = 0; 
             a.isSkipped = 0;
             cellData{cellDataIdx,sheetIdx} = a;

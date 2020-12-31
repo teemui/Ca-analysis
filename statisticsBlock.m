@@ -4,6 +4,13 @@
 % editDatabase.m is used to load a single dataset from a database created
 % by readData.m and provide it's information
 databaseInfo = editDatabase('load', 'multi');
+
+% If nothing is selected or user clicks cancel in the selection window ->
+% return to main menu
+if(isempty(databaseInfo))
+    return
+end
+
 dataset = databaseInfo{1};
 datasetName = databaseInfo{2};
 caDatabase = databaseInfo{3};
@@ -46,18 +53,32 @@ while(true)
     
     if(plotType == 1)
         % Ask user for variable to plot in the boxplot
-        variable = listdlg('PromptString', {'Variable to plot? '},...
+        [variable, tf] = listdlg('PromptString', {'Variable to plot? '},...
             'SelectionMode', 'single','ListString', variableList);
+        
+        % Return to main menu if cancel is pressed
+        if ~tf
+            continue
+        end
+        
         makeBoxplot(dataset, datasetName, variableList{variable}, chosenROIs)
     elseif(plotType == 2)
         % Ask user for variable to plot in the x-axis
-        Xvar = listdlg('PromptString', {'Variable for x-axis? '},...
+        [Xvar, tf] = listdlg('PromptString', {'Variable for x-axis? '},...
             'SelectionMode', 'single','ListString', variableList);
 
+        if ~tf
+            continue
+        end
+        
         % Ask user for variable to plot in the y-axis
-        Yvar = listdlg('PromptString', {'Variable for y-axis? '},...
+        [Yvar, tf] = listdlg('PromptString', {'Variable for y-axis? '},...
             'SelectionMode', 'single','ListString', variableList);
-
+        
+        if ~tf
+            continue
+        end
+        
         makeScatterPlot(dataset, datasetName, variableList{Xvar}, ...
             variableList{Yvar}, chosenROIs)
     elseif(plotType == 3)
